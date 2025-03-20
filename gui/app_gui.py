@@ -90,7 +90,7 @@ class MemoryTrackerApp(QWidget):
         tracking_thread = threading.Thread(target=self.track_memory, daemon=True)
         tracking_thread.start()
 
-        self.ani = animation.FuncAnimation(self.figure, self.update_graph, interval=1000)
+        self.ani = animation.FuncAnimation(self.figure, self.update_graph, interval=300)
 
     def track_memory(self):
         while True:
@@ -117,7 +117,7 @@ class MemoryTrackerApp(QWidget):
             if len(self.memory_data) > 50:
                 self.memory_data.pop(0)
 
-            time.sleep(5)
+            time.sleep(1)
 
     def update_graph(self, frame):
         self.ax.clear()
@@ -126,7 +126,13 @@ class MemoryTrackerApp(QWidget):
         self.ax.set_ylabel("Usage (%)")
         self.ax.set_title("Memory Usage Over Time")
         self.ax.legend()
+
+        self.set_graph_theme()  # Apply the theme first
+
+        self.ax.grid(color="gray", linestyle="--", linewidth=0.5)  # Reapply the grid AFTER theme
+
         self.canvas.draw()
+
 
 def start_app():
     app = QApplication(sys.argv)
