@@ -9,6 +9,10 @@ def get_memory_usage():
         "percent": mem.percent
     }
 
+def get_cpu_usage():
+    """Get CPU usage percentage"""
+    return psutil.cpu_percent(interval=0.1)
+
 def get_top_processes(limit=5):
     processes = []
     
@@ -23,7 +27,7 @@ def get_top_processes(limit=5):
                 "memory_mb": round(p.info['memory_info'].rss / (1024 * 1024), 2),  # Convert bytes to MB
                 "cpu_percent": round(p.info['cpu_percent'], 2)
             })
-        except psutil.NoSuchProcess:
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
             continue
 
     processes.sort(key=lambda x: (x['memory_percent'], x['cpu_percent']), reverse=True)
