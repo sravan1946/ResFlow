@@ -6,9 +6,7 @@ matplotlib.use("Qt5Agg")  # Force Matplotlib to use Qt instead of TkAgg
 
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget, QSizePolicy, QPushButton
-
-
+from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget, QSizePolicy
 from PyQt5.QtCore import Qt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from tracker.monitor import get_memory_usage, get_top_processes
@@ -21,7 +19,7 @@ class MemoryTrackerApp(QWidget):
 
         self.setWindowTitle("ResFlow - Memory Tracker")
         self.setGeometry(100, 100, 500, 400)
-        self.is_dark_mode = False  # Initialize theme state
+
         self.memory_label = QLabel("Memory Usage: Fetching...", self)
         self.memory_label.setAlignment(Qt.AlignCenter)
 
@@ -72,7 +70,6 @@ class MemoryTrackerApp(QWidget):
             self.ax.tick_params(axis="x", colors="white")
             self.ax.tick_params(axis="y", colors="white")
             self.ax.grid(color="gray", linestyle="--", linewidth=0.5)
-            self.ax.title.set_color("white")
         else:
             self.figure.patch.set_facecolor("white")  # Light background
             self.ax.set_facecolor("white")
@@ -83,7 +80,7 @@ class MemoryTrackerApp(QWidget):
             self.ax.tick_params(axis="x", colors="black")
             self.ax.tick_params(axis="y", colors="black")
             self.ax.grid(color="gray", linestyle="--", linewidth=0.5)
-            
+
         self.canvas.draw()  # Refresh canvas
 
     def start_tracking(self):
