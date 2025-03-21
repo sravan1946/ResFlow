@@ -34,4 +34,11 @@ def log_memory(usage_percent):
     memory_logger.info(f"Memory Usage: {usage_percent}%; Top Processes: {process_details}")
 
 def log_alert(usage_percent):
-    alert_logger.warning(f"ALERT: High Memory Usage at {usage_percent}%")
+    # Get the top process consuming the most memory
+    top_process = get_top_processes(1)[0]
+    top_process_details = f"{top_process['name']} (PID: {top_process['pid']}) - {top_process['memory_percent']:.2f}%"
+
+    # Log the alert with the highest memory-consuming process
+    alert_logger.warning(
+        f"ALERT: High Memory Usage at {usage_percent}%; Highest Memory Process: {top_process_details}"
+    )

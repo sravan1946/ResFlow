@@ -1,2 +1,4 @@
 2025-03-20 15:01:18,801 - WARNING - ALERT: High Memory Usage at 80.1%
 2025-03-20 18:53:49,917 - WARNING - ALERT: High Memory Usage at 82.1%
+2025-03-21 10:24:10,926 - WARNING - ALERT: High Memory Usage at 80.1%
+2025-03-21 11:04:35,109 - WARNING - ALERT: High Memory Usage at 82.8%; Highest Memory Process: chrome (PID: 3913) - 8.92%

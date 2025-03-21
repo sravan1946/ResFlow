@@ -1,9 +1,10 @@
 import sys
-import os
+import threading
+import time
 import numpy as np
 from PyQt5.QtWidgets import (
-    QApplication, QLabel, QVBoxLayout, QWidget, QPushButton,
-    QHBoxLayout, QFrame, QMainWindow
+    QApplication, QLabel, QVBoxLayout, QWidget, QSizePolicy, 
+    QPushButton, QHBoxLayout, QFrame, QMainWindow
 )
 from PyQt5.QtCore import Qt, QTimer
 import pyqtgraph as pg
@@ -70,18 +71,18 @@ class MemoryTrackerApp(QMainWindow):
         
         self.main_layout.addWidget(self.graph_widget)
         
-        # Process information section with cards and kill switch
+        # Process information section
         process_frame = QFrame()
         process_frame.setFrameShape(QFrame.StyledPanel)
         process_layout = QVBoxLayout(process_frame)
-
+        
         process_title = QLabel("Top Memory Consumers")
         process_title.setStyleSheet("font-size: 14px; font-weight: bold;")
         process_layout.addWidget(process_title)
-
-        self.process_cards = QVBoxLayout()  # Create a layout for process cards
-        process_layout.addLayout(self.process_cards)
-
+        
+        self.process_label = QLabel("Fetching...")
+        process_layout.addWidget(self.process_label)
+        
         self.main_layout.addWidget(process_frame)
         
         # Initialize state
@@ -113,7 +114,7 @@ class MemoryTrackerApp(QMainWindow):
                 QFrame { 
                     border: 1px solid #505050;
                     background-color: #1e1e1e;
-                    border-radius: 8px;
+                    border-radius: 4px;
                 }
             """)
             
@@ -123,23 +124,11 @@ class MemoryTrackerApp(QMainWindow):
             self.graph_widget.getAxis('left').setPen(pg.mkPen(color='#808080'))
             self.graph_widget.getAxis('bottom').setTextPen(pg.mkPen(color='#e0e0e0'))
             self.graph_widget.getAxis('left').setTextPen(pg.mkPen(color='#e0e0e0'))
-
-            # Update process card styles
-            for i in range(self.process_cards.count()):
-                widget = self.process_cards.itemAt(i).widget()
-                if isinstance(widget, QFrame):
-                    widget.setStyleSheet("""
-                        QFrame {
-                            border: 1px solid #505050;
-                            border-radius: 8px;
-                            background-color: #1e1e1e;
-                            padding: 10px;
-                        }
-                        QFrame:hover {
-                            background-color: #2a2a2a;
-                            border: 1px solid #808080;
-                        }
-                    """)
+            
+            # Style grid lines
+            self.graph_widget.getAxis('bottom').setGrid(255)
+            self.graph_widget.getAxis('left').setGrid(255)
+            self.graph_widget.showGrid(x=True, y=True, alpha=0.3)
         else:
             # Light theme
             self.theme_button.setText("🌙 Dark Mode")
@@ -159,7 +148,7 @@ class MemoryTrackerApp(QMainWindow):
                 QFrame { 
                     border: 1px solid #cccccc;
                     background-color: white;
-                    border-radius: 8px;
+                    border-radius: 4px;
                 }
             """)
             
@@ -169,133 +158,77 @@ class MemoryTrackerApp(QMainWindow):
             self.graph_widget.getAxis('left').setPen(pg.mkPen(color='k'))
             self.graph_widget.getAxis('bottom').setTextPen(pg.mkPen(color='k'))
             self.graph_widget.getAxis('left').setTextPen(pg.mkPen(color='k'))
-
-            # Update process card styles
-            for i in range(self.process_cards.count()):
-                widget = self.process_cards.itemAt(i).widget()
-                if isinstance(widget, QFrame):
-                    widget.setStyleSheet("""
-                        QFrame {
-                            border: 1px solid #cccccc;
-                            border-radius: 8px;
-                            background-color: white;
-                            padding: 10px;
-                        }
-                        QFrame:hover {
-                            background-color: #f0f0f0;
-                            border: 1px solid #aaaaaa;
-                        }
-                    """)
+            
+            # Style grid lines
+            self.graph_widget.showGrid(x=True, y=True, alpha=0.3)
+        
+        # Update plot line color
+        if len(self.memory_data) > 0:
+            color = '#ff5050' if self.is_dark_mode else 'r'
+            self.memory_curve.setPen(pg.mkPen(color=color, width=2))
 
     def start_tracking(self):
+        # Use QTimer instead of threading for better Qt integration
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_data)
-        self.timer.start(1000)
-
-    def update_process_cards(self, processes):
-        for i in reversed(range(self.process_cards.count())):
-            widget = self.process_cards.itemAt(i).widget()
-            if widget:
-                widget.setParent(None)
-
-        for process in processes:
-            card = QFrame()
-            card.setFrameShape(QFrame.StyledPanel)
-            if self.is_dark_mode:
-                card.setStyleSheet("""
-                    QFrame {
-                        border: 1px solid #505050;
-                        border-radius: 8px;
-                        background-color: #1e1e1e;
-                        padding: 10px;
-                    }
-                    QFrame:hover {
-                        background-color: #2a2a2a;
-                        border: 1px solid #808080;
-                    }
-                """)
-            else:
-                card.setStyleSheet("""
-                    QFrame {
-                        border: 1px solid #cccccc;
-                        border-radius: 8px;
-                        background-color: white;
-                        padding: 10px;
-                    }
-                    QFrame:hover {
-                        background-color: #f0f0f0;
-                        border: 1px solid #aaaaaa;
-                    }
-                """)
-            
-
-            card_layout = QHBoxLayout(card)
-            process_label = QLabel(
-                f"{process['name']} (PID: {process['pid']}) - "
-                f"{process['memory_mb']}MB, CPU: {process['cpu_percent']}%"
-            )
-            process_label.setStyleSheet("font-size: 12px;")
-            card_layout.addWidget(process_label)
-
-            kill_button = QPushButton("Kill")
-            kill_button.setStyleSheet("""
-                QPushButton {
-                    background-color: #ff5050;
-                    color: white;
-                    border-radius: 4px;
-                    padding: 5px;
-                }
-                QPushButton:hover {
-                    background-color: #d04040;
-                }
-            """)
-            kill_button.setFixedWidth(80)
-            kill_button.clicked.connect(lambda _, pid=process["pid"]: self.kill_process(pid))
-            card_layout.addWidget(kill_button)
-
-            self.process_cards.addWidget(card)
-
-    def kill_process(self, pid):
-        try:
-            os.kill(pid, 9)
-            print(f"Process with PID {pid} killed successfully.")
-        except Exception as e:
-            print(f"Error killing process with PID {pid}: {e}")
+        self.timer.start(1000)  # Update every second
+        
+    #     # Start a separate thread for monitoring to avoid UI freezing
+    #     self.monitor_thread = threading.Thread(target=self.monitor_system, daemon=True)
+    #     self.monitor_thread.start()
+    
+    # def monitor_system(self):
+    #     # This thread continuously monitors the system but doesn't update the UI directly
+    #     while True:
+    #         time.sleep(1)
+    #         # Just keep the thread alive - actual updates happen in update_data
 
     def update_data(self):
+        # Import alert functionality only when needed
         from tracker.alert import show_alert
         from tracker.logger import log_memory
-
+        
+        # Get current usage data
         usage = get_memory_usage()
+        
+        # Handle alerts
         if usage["percent"] > 80 and not self.alert_triggered:
             show_alert(self, usage["percent"])
             log_memory(f"ALERT: High memory usage detected at {usage['percent']}%")
             self.alert_triggered = True
         else:
-            self.alert_triggered = False
-
+            log_memory(f"Memory usage: {usage['percent']}%")
+        
+        self.alert_triggered = usage["percent"] > 80
+        
         # Update memory label
         self.memory_label.setText(
             f"Memory Usage: {usage['percent']}% ({usage['used']}MB/{usage['total']}MB)"
         )
-
+        
         # Get process information
         top_processes = get_top_processes(5)
-        self.update_process_cards(top_processes)
-
+        process_info = ""
+        
+        for i, p in enumerate(top_processes):
+            process_info += f"<b>{i+1}.</b> {p['name']} (PID: {p['pid']}) - {p['memory_mb']}MB, CPU: {p['cpu_percent']}%<br>"
+        
+        self.process_label.setText(f"<html>{process_info}</html>")
+        self.process_label.setTextFormat(Qt.RichText)
+        
         # Update graph data
         self.elapsed_time += 1
         self.time_data = np.append(self.time_data, self.elapsed_time)
         self.memory_data = np.append(self.memory_data, usage["percent"])
-
+        
         # Keep only the latest 60 data points (1 minute of data)
         if len(self.memory_data) > 60:
             self.memory_data = self.memory_data[-60:]
             self.time_data = self.time_data[-60:]
-
+        
         # Update the plot
         self.memory_curve.setData(self.time_data, self.memory_data)
-
+        
         # Add warning zone if memory usage is high
         if usage["percent"] > 70:
             color = '#ff5050' if self.is_dark_mode else 'r'
