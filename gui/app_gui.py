@@ -96,6 +96,7 @@ class MemoryTrackerApp(QMainWindow):
         self.graph_widget.setLabel('bottom', 'Time', units='s')
         self.graph_widget.showGrid(x=True, y=True, alpha=0.3)
         self.graph_widget.setYRange(0, 100)
+        self.graph_widget.enableAutoRange(axis='y', enable=True)
         self.graph_widget.setTitle("Memory Usage Over Time", size="14pt")
         self.graph_widget.setMinimumHeight(400)
 
@@ -146,32 +147,196 @@ class MemoryTrackerApp(QMainWindow):
         self.is_dark_mode = not self.is_dark_mode
         self.apply_theme()
 
+    # def apply_theme(self):
+    #     if self.is_dark_mode:
+    #         self.theme_button.setText("☀️ Light Mode")
+    #         self.setStyleSheet("""
+    #             QMainWindow, QWidget, QFrame { background-color: black; color: #e0e0e0; }
+    #             QLabel { color: white; }
+    #             QPushButton { background-color: #3a3a3a; color: #e0e0e0; border-radius: 6px; padding: 8px; }
+    #             QPushButton:hover { background-color: #505050; }
+    #             QFrame { background-color: black; border-radius: 10px; padding: 10px; }
+    #             QHboxLayout { background-color: black; }
+    #             QVboxLayout { background-color: black; }
+                
+    #         """)
+    #         self.graph_widget.setBackground('#1e1e1e')
+    #         for i in range(self.main_layout.count()):
+    #             item = self.main_layout.itemAt(i)
+    #             if item.widget() and isinstance(item.widget(), QFrame):
+    #                 item.widget().setStyleSheet("background-color: #2d2d2d; border-radius: 10px; padding: 10px;")
+
+    #     else:
+    #         self.theme_button.setText("🌙 Dark Mode")
+    #         self.setStyleSheet("""
+    #             QMainWindow, QWidget { background-color: #f5f5f5; color: #333333; }
+    #             QLabel { color: #333333; }
+    #             QPushButton { background-color: #0078d4; color: white; font-weight: bold; border-radius: 6px; padding: 8px; }
+    #             QPushButton:hover { background-color: #005a9e; }
+    #         """)
+    #         self.graph_widget.setBackground('w')
+    #         for i in range(self.main_layout.count()):
+    #             item = self.main_layout.itemAt(i)
+    #             if item.widget() and isinstance(item.widget(), QFrame):
+    #                 item.widget().setStyleSheet("background-color: white; border-radius: 10px; padding: 10px;")
+
     def apply_theme(self):
         if self.is_dark_mode:
             self.theme_button.setText("☀️ Light Mode")
+            
+            # Main application style
             self.setStyleSheet("""
-                QMainWindow, QWidget { background-color: #1e1e1e; color: #e0e0e0; }
-                QLabel { color: #e0e0e0; }
-                QPushButton { background-color: #3a3a3a; color: #e0e0e0; border-radius: 6px; padding: 8px; }
-                QPushButton:hover { background-color: #505050; }
+                QMainWindow, QScrollArea { background-color: #121212; }
+                QWidget { color: #e0e0e0; }
+                QLabel { color: #ffffff; }
+                
+                QPushButton {
+                    background-color: #3700B3;
+                    color: white;
+                    font-weight: bold;
+                    border-radius: 6px;
+                    padding: 8px 12px;
+                }
+                QPushButton:hover {
+                    background-color: #6200EE;
+                }
+                
+                QScrollBar:vertical {
+                    border: none;
+                    background: #1e1e1e;
+                    width: 10px;
+                    margin: 0px;
+                }
+                QScrollBar::handle:vertical {
+                    background: #3700B3;
+                    min-height: 20px;
+                    border-radius: 5px;
+                }
             """)
+            
+            # Set graph background
             self.graph_widget.setBackground('#1e1e1e')
+            self.graph_widget.getAxis('left').setPen(pg.mkPen(color='#6200EE'))
+            self.graph_widget.getAxis('bottom').setPen(pg.mkPen(color='#6200EE'))
+            
+            # Update all frames to dark theme
+            for i in range(self.main_layout.count()):
+                item = self.main_layout.itemAt(i)
+                if item.widget() and isinstance(item.widget(), QFrame):
+                    item.widget().setStyleSheet("""
+                        background-color: #1e1e1e;
+                        border-radius: 10px;
+                        padding: 15px;
+                        border: 1px solid #333333;
+                    """)
         else:
             self.theme_button.setText("🌙 Dark Mode")
+            
+            # Main application style
             self.setStyleSheet("""
-                QMainWindow, QWidget { background-color: #f5f5f5; color: #333333; }
+                QMainWindow, QScrollArea { background-color: #f5f5f5; }
+                QWidget { color: #333333; }
                 QLabel { color: #333333; }
-                QPushButton { background-color: #0078d4; color: white; font-weight: bold; border-radius: 6px; padding: 8px; }
-                QPushButton:hover { background-color: #005a9e; }
+                
+                QPushButton {
+                    background-color: #0078d4;
+                    color: white;
+                    font-weight: bold;
+                    border-radius: 6px;
+                    padding: 8px 12px;
+                }
+                QPushButton:hover {
+                    background-color: #005a9e;
+                }
+                
+                QScrollBar:vertical {
+                    border: none;
+                    background: #f0f0f0;
+                    width: 10px;
+                    margin: 0px;
+                }
+                QScrollBar::handle:vertical {
+                    background: #0078d4;
+                    min-height: 20px;
+                    border-radius: 5px;
+                }
             """)
-            self.graph_widget.setBackground('w')
+            
+            # Set graph background
+            self.graph_widget.setBackground('#ffffff')
+            self.graph_widget.getAxis('left').setPen(pg.mkPen(color='#0078d4'))
+            self.graph_widget.getAxis('bottom').setPen(pg.mkPen(color='#0078d4'))
+            
+            # Update all frames to light theme
+            for i in range(self.main_layout.count()):
+                item = self.main_layout.itemAt(i)
+                if item.widget() and isinstance(item.widget(), QFrame):
+                    item.widget().setStyleSheet("""
+                        background-color: white;
+                        border-radius: 10px;
+                        padding: 15px;
+                        border: 1px solid #e0e0e0;
+                    """)
 
     def start_tracking(self):
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_data)
         self.timer.start(1000)
 
+    # def update_process_cards(self, processes):
+    #     for i in reversed(range(self.process_cards.count())):
+    #         widget = self.process_cards.itemAt(i).widget()
+    #         if widget:
+    #             widget.setParent(None)
+
+    #     for process in processes:
+    #         card = QFrame()
+    #         if self.is_dark_mode:
+    #             card.setStyleSheet("""
+    #                 QFrame {
+    #                     background-color: #333333;
+    #                     border-radius: 10px;
+    #                     padding: 10px;
+    #                 }
+    #             """)
+    #         else:
+    #             card.setStyleSheet("""
+    #                 QFrame {
+    #                     background-color: white;
+    #                     border-radius: 10px;
+    #                     padding: 10px;
+    #                 }
+    #             """)
+    #         self.add_shadow(card)
+
+    #         card_layout = QHBoxLayout(card)
+    #         process_label = QLabel(
+    #             f"{process['name']} (PID: {process['pid']}) - {process['memory_mb']}MB, CPU: {process['cpu_percent']}%"
+    #         )
+    #         process_label.setStyleSheet("font-size: 14px;")
+    #         card_layout.addWidget(process_label)
+
+    #         kill_button = QPushButton("Kill")
+    #         kill_button.setFixedWidth(80)
+    #         kill_button.setStyleSheet("""
+    #             QPushButton {
+    #                 background-color: #ff5050;
+    #                 color: white;
+    #                 font-weight: bold;
+    #                 border-radius: 6px;
+    #                 padding: 6px;
+    #             }
+    #             QPushButton:hover {
+    #                 background-color: #d04040;
+    #             }
+    #         """)
+    #         kill_button.clicked.connect(lambda _, pid=process["pid"]: self.kill_process(pid))
+    #         card_layout.addWidget(kill_button)
+
+    #         self.process_cards.addWidget(card)
+
     def update_process_cards(self, processes):
+        # Clear existing cards
         for i in reversed(range(self.process_cards.count())):
             widget = self.process_cards.itemAt(i).widget()
             if widget:
@@ -179,46 +344,82 @@ class MemoryTrackerApp(QMainWindow):
 
         for process in processes:
             card = QFrame()
-            card.setStyleSheet("""
-                QFrame {
-                    background-color: white;
-                    border-radius: 10px;
-                    padding: 10px;
-                }
-            """)
+            if self.is_dark_mode:
+                card.setStyleSheet("""
+                    QFrame {
+                        background-color: #1e1e1e;
+                        border-radius: 10px;
+                        padding: 10px;
+                        border: 1px solid #333333;
+                    }
+                """)
+            else:
+                card.setStyleSheet("""
+                    QFrame {
+                        background-color: white;
+                        border-radius: 10px;
+                        padding: 10px;
+                        border: 1px solid #e0e0e0;
+                    }
+                """)
             self.add_shadow(card)
 
             card_layout = QHBoxLayout(card)
-            process_label = QLabel(
-                f"{process['name']} (PID: {process['pid']}) - {process['memory_mb']}MB, CPU: {process['cpu_percent']}%"
-            )
+            card_layout.setContentsMargins(8, 6, 8, 6)
+            card_layout.setSpacing(10)
+
+            # Process name and details in a single line
+            process_info = f"<b>{process['name']}</b> (PID: {process['pid']}) - {process['memory_mb']}MB, CPU: {process['cpu_percent']}%"
+            process_label = QLabel(process_info)
             process_label.setStyleSheet("font-size: 14px;")
             card_layout.addWidget(process_label)
 
+            # Create kill button with improved styling but shorter text
             kill_button = QPushButton("Kill")
-            kill_button.setFixedWidth(80)
-            kill_button.setStyleSheet("""
-                QPushButton {
-                    background-color: #ff5050;
-                    color: white;
-                    font-weight: bold;
-                    border-radius: 6px;
-                    padding: 6px;
-                }
-                QPushButton:hover {
-                    background-color: #d04040;
-                }
-            """)
+            kill_button.setFixedWidth(70)
+            
+            if self.is_dark_mode:
+                kill_button.setStyleSheet("""
+                    QPushButton {
+                        background-color: #CF6679;
+                        color: white;
+                        font-weight: bold;
+                        border-radius: 6px;
+                        padding: 6px;
+                    }
+                    QPushButton:hover {
+                        background-color: #E57373;
+                    }
+                """)
+            else:
+                kill_button.setStyleSheet("""
+                    QPushButton {
+                        background-color: #F44336;
+                        color: white;
+                        font-weight: bold;
+                        border-radius: 6px;
+                        padding: 6px;
+                    }
+                    QPushButton:hover {
+                        background-color: #E53935;
+                    }
+                """)
+                
             kill_button.clicked.connect(lambda _, pid=process["pid"]: self.kill_process(pid))
             card_layout.addWidget(kill_button)
 
             self.process_cards.addWidget(card)
-
+            
+            # Add a smaller spacing between cards
+            if process != processes[-1]:
+                spacer = QWidget()
+                spacer.setFixedHeight(4)
+                self.process_cards.addWidget(spacer)
     def kill_process(self, pid):
         try:
             os.kill(pid, 9)
             print(f"Process with PID {pid} killed successfully.")
-        except Exception as e:
+        except BaseException as e:
             print(f"Error killing process with PID {pid}: {e}")
     def update_data(self):
         from tracker.alert import show_alert
