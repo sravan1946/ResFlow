@@ -1,3 +1,4 @@
+import signal
 import sys
 import os
 import numpy as np
@@ -99,6 +100,22 @@ class MemoryTrackerApp(QMainWindow):
         self.graph_widget.enableAutoRange(axis='y', enable=True)
         self.graph_widget.setTitle("Memory Usage Over Time", size="14pt")
         self.graph_widget.setMinimumHeight(400)
+        viewbox = self.graph_widget.getViewBox()
+        viewbox.setLimits(
+            # X axis limits
+            xMin=0,                  # Don't show negative time
+            xMax=None,               # Allow expanding as time progresses
+            minXRange=5,             # Don't zoom in closer than 5 seconds
+            maxXRange=60,            # Don't zoom out further than 60 seconds
+            
+            # Y axis limits
+            yMin=0,                  # Don't show below 0%
+            yMax=120,                # Don't show above 120%
+            minYRange=5,             # Don't zoom in closer than 5% range
+            maxYRange=120            # Don't zoom out further than 120% range
+        )
+        viewbox.setMouseEnabled(x=False, y=False)
+
 
         # Create plot line for memory usage
         self.memory_curve = self.graph_widget.plot([], [], pen=pg.mkPen(color='r', width=3))
@@ -146,39 +163,6 @@ class MemoryTrackerApp(QMainWindow):
     def toggle_theme(self):
         self.is_dark_mode = not self.is_dark_mode
         self.apply_theme()
-
-    # def apply_theme(self):
-    #     if self.is_dark_mode:
-    #         self.theme_button.setText("☀️ Light Mode")
-    #         self.setStyleSheet("""
-    #             QMainWindow, QWidget, QFrame { background-color: black; color: #e0e0e0; }
-    #             QLabel { color: white; }
-    #             QPushButton { background-color: #3a3a3a; color: #e0e0e0; border-radius: 6px; padding: 8px; }
-    #             QPushButton:hover { background-color: #505050; }
-    #             QFrame { background-color: black; border-radius: 10px; padding: 10px; }
-    #             QHboxLayout { background-color: black; }
-    #             QVboxLayout { background-color: black; }
-                
-    #         """)
-    #         self.graph_widget.setBackground('#1e1e1e')
-    #         for i in range(self.main_layout.count()):
-    #             item = self.main_layout.itemAt(i)
-    #             if item.widget() and isinstance(item.widget(), QFrame):
-    #                 item.widget().setStyleSheet("background-color: #2d2d2d; border-radius: 10px; padding: 10px;")
-
-    #     else:
-    #         self.theme_button.setText("🌙 Dark Mode")
-    #         self.setStyleSheet("""
-    #             QMainWindow, QWidget { background-color: #f5f5f5; color: #333333; }
-    #             QLabel { color: #333333; }
-    #             QPushButton { background-color: #0078d4; color: white; font-weight: bold; border-radius: 6px; padding: 8px; }
-    #             QPushButton:hover { background-color: #005a9e; }
-    #         """)
-    #         self.graph_widget.setBackground('w')
-    #         for i in range(self.main_layout.count()):
-    #             item = self.main_layout.itemAt(i)
-    #             if item.widget() and isinstance(item.widget(), QFrame):
-    #                 item.widget().setStyleSheet("background-color: white; border-radius: 10px; padding: 10px;")
 
     def apply_theme(self):
         if self.is_dark_mode:
@@ -283,58 +267,6 @@ class MemoryTrackerApp(QMainWindow):
         self.timer.timeout.connect(self.update_data)
         self.timer.start(1000)
 
-    # def update_process_cards(self, processes):
-    #     for i in reversed(range(self.process_cards.count())):
-    #         widget = self.process_cards.itemAt(i).widget()
-    #         if widget:
-    #             widget.setParent(None)
-
-    #     for process in processes:
-    #         card = QFrame()
-    #         if self.is_dark_mode:
-    #             card.setStyleSheet("""
-    #                 QFrame {
-    #                     background-color: #333333;
-    #                     border-radius: 10px;
-    #                     padding: 10px;
-    #                 }
-    #             """)
-    #         else:
-    #             card.setStyleSheet("""
-    #                 QFrame {
-    #                     background-color: white;
-    #                     border-radius: 10px;
-    #                     padding: 10px;
-    #                 }
-    #             """)
-    #         self.add_shadow(card)
-
-    #         card_layout = QHBoxLayout(card)
-    #         process_label = QLabel(
-    #             f"{process['name']} (PID: {process['pid']}) - {process['memory_mb']}MB, CPU: {process['cpu_percent']}%"
-    #         )
-    #         process_label.setStyleSheet("font-size: 14px;")
-    #         card_layout.addWidget(process_label)
-
-    #         kill_button = QPushButton("Kill")
-    #         kill_button.setFixedWidth(80)
-    #         kill_button.setStyleSheet("""
-    #             QPushButton {
-    #                 background-color: #ff5050;
-    #                 color: white;
-    #                 font-weight: bold;
-    #                 border-radius: 6px;
-    #                 padding: 6px;
-    #             }
-    #             QPushButton:hover {
-    #                 background-color: #d04040;
-    #             }
-    #         """)
-    #         kill_button.clicked.connect(lambda _, pid=process["pid"]: self.kill_process(pid))
-    #         card_layout.addWidget(kill_button)
-
-    #         self.process_cards.addWidget(card)
-
     def update_process_cards(self, processes):
         # Clear existing cards
         for i in reversed(range(self.process_cards.count())):
@@ -352,6 +284,10 @@ class MemoryTrackerApp(QMainWindow):
                         padding: 10px;
                         border: 1px solid #333333;
                     }
+                    QFrame:hover {
+                        background-color: #333333;
+
+                    }
                 """)
             else:
                 card.setStyleSheet("""
@@ -360,6 +296,9 @@ class MemoryTrackerApp(QMainWindow):
                         border-radius: 10px;
                         padding: 10px;
                         border: 1px solid #e0e0e0;
+                    }
+                    QFrame:hover {
+                        background-color: #f0f0f0;
                     }
                 """)
             self.add_shadow(card)
@@ -371,7 +310,7 @@ class MemoryTrackerApp(QMainWindow):
             # Process name and details in a single line
             process_info = f"<b>{process['name']}</b> (PID: {process['pid']}) - {process['memory_mb']}MB, CPU: {process['cpu_percent']}%"
             process_label = QLabel(process_info)
-            process_label.setStyleSheet("font-size: 14px;")
+            process_label.setStyleSheet("font-size: 14px; background-color: transparent; border: none;")
             card_layout.addWidget(process_label)
 
             # Create kill button with improved styling but shorter text
@@ -410,11 +349,6 @@ class MemoryTrackerApp(QMainWindow):
 
             self.process_cards.addWidget(card)
             
-            # Add a smaller spacing between cards
-            if process != processes[-1]:
-                spacer = QWidget()
-                spacer.setFixedHeight(4)
-                self.process_cards.addWidget(spacer)
     def kill_process(self, pid):
         try:
             os.kill(pid, 9)
@@ -467,4 +401,17 @@ def start_app():
     app = QApplication(sys.argv)
     window = MemoryTrackerApp()
     window.show()
+        # Set up signal handling for Ctrl+C
+    def signal_handler(sig, frame):
+        print("Closing application...")
+        app.quit()
+    
+    # Register the signal handler for SIGINT (Ctrl+C)
+    signal.signal(signal.SIGINT, signal_handler)
+    
+    # Use a timer to process Python signals (required for Qt apps)
+    timer = QTimer()
+    timer.start(500)  # 500ms
+    timer.timeout.connect(lambda: None)  # Dummy function to process events
+
     sys.exit(app.exec_())
