@@ -155,7 +155,7 @@ class MemoryTrackerApp(QMainWindow):
 
     def update_fill_curve(self, data_min=None):
         if data_min is None and len(self.memory_data) > 0:
-            data_min = np.min(self.memory_data) -3
+            data_min = np.min(self.memory_data) - 4
         else:
             data_min = 0
         self.fill_curve.setFillLevel(data_min)
