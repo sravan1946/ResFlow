@@ -114,7 +114,7 @@ class MemoryTrackerApp(QMainWindow):
         
         # Add filled area under the curve
         self.fill_curve = pg.PlotDataItem([], [], 
-            fillLevel=0, 
+            fillLevel=None, 
             brush=pg.mkBrush(color=(255, 0, 0, 100)),  # Semi-transparent red fill
             pen=None
         )
@@ -152,6 +152,13 @@ class MemoryTrackerApp(QMainWindow):
         self.alert_triggered = False
         self.apply_theme()
         self.start_tracking()
+
+    def update_fill_curve(self, data_min=None):
+        if data_min is None and len(self.memory_data) > 0:
+            data_min = np.min(self.memory_data) -3
+        else:
+            data_min = 0
+        self.fill_curve.setFillLevel(data_min)
 
     def add_shadow(self, widget):
         shadow = QGraphicsDropShadowEffect()
@@ -390,6 +397,7 @@ class MemoryTrackerApp(QMainWindow):
         # Update the plot
         self.memory_curve.setData(self.time_data, self.memory_data)
         self.fill_curve.setData(self.time_data, self.memory_data)
+        self.update_fill_curve()
 
         # Add warning zone if memory usage is high
         if usage["percent"] > 70:
