@@ -13,7 +13,6 @@ from PyQt5.QtWidgets import QSizePolicy, QScrollArea
 from PyQt5.QtWidgets import QGraphicsDropShadowEffect
 from PyQt5.QtGui import QColor
 
-
 # Set global pyqtgraph configuration
 pg.setConfigOptions(antialias=True)
 
@@ -92,6 +91,7 @@ class MemoryTrackerApp(QMainWindow):
 
         # Graph widget
         self.graph_widget = pg.PlotWidget()
+        self.graph_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.graph_widget.setBackground('w')
         self.graph_widget.setLabel('left', 'Memory Usage', units='%')
         self.graph_widget.setLabel('bottom', 'Time', units='s')
@@ -100,25 +100,26 @@ class MemoryTrackerApp(QMainWindow):
         self.graph_widget.enableAutoRange(axis='y', enable=True)
         self.graph_widget.setTitle("Memory Usage Over Time", size="14pt")
         self.graph_widget.setMinimumHeight(400)
+        self.graph_widget.setMaximumHeight(400)
+
         viewbox = self.graph_widget.getViewBox()
         viewbox.setLimits(
-            # X axis limits
-            xMin=0,                  # Don't show negative time
-            xMax=None,               # Allow expanding as time progresses
-            minXRange=5,             # Don't zoom in closer than 5 seconds
-            maxXRange=60,            # Don't zoom out further than 60 seconds
-            
-            # Y axis limits
-            yMin=0,                  # Don't show below 0%
-            yMax=120,                # Don't show above 120%
-            minYRange=5,             # Don't zoom in closer than 5% range
-            maxYRange=120            # Don't zoom out further than 120% range
+            xMin=0, xMax=None, minXRange=5, maxXRange=60,
+            yMin=0, yMax=120, minYRange=5, maxYRange=120
         )
         viewbox.setMouseEnabled(x=False, y=False)
 
-
-        # Create plot line for memory usage
+        # Create plot line for memory usage with fill
         self.memory_curve = self.graph_widget.plot([], [], pen=pg.mkPen(color='r', width=3))
+        
+        # Add filled area under the curve
+        self.fill_curve = pg.PlotDataItem([], [], 
+            fillLevel=0, 
+            brush=pg.mkBrush(color=(255, 0, 0, 100)),  # Semi-transparent red fill
+            pen=None
+        )
+        self.graph_widget.addItem(self.fill_curve)
+
         self.memory_data = np.array([])
         self.time_data = np.array([])
         self.elapsed_time = 0
@@ -286,7 +287,6 @@ class MemoryTrackerApp(QMainWindow):
                     }
                     QFrame:hover {
                         background-color: #333333;
-
                     }
                 """)
             else:
@@ -355,6 +355,7 @@ class MemoryTrackerApp(QMainWindow):
             print(f"Process with PID {pid} killed successfully.")
         except BaseException as e:
             print(f"Error killing process with PID {pid}: {e}")
+
     def update_data(self):
         from tracker.alert import show_alert
         from tracker.logger import log_memory
@@ -388,20 +389,25 @@ class MemoryTrackerApp(QMainWindow):
 
         # Update the plot
         self.memory_curve.setData(self.time_data, self.memory_data)
+        self.fill_curve.setData(self.time_data, self.memory_data)
 
         # Add warning zone if memory usage is high
         if usage["percent"] > 70:
-            color = '#ff5050' if self.is_dark_mode else 'r'
-            self.memory_curve.setPen(pg.mkPen(color=color, width=3))
+            fill_color = (255, 80, 80, 100) if self.is_dark_mode else (255, 0, 0, 100)
+            line_color = '#ff5050' if self.is_dark_mode else 'r'
+            self.memory_curve.setPen(pg.mkPen(color=line_color, width=3))
+            self.fill_curve.setBrush(pg.mkBrush(color=fill_color))
         else:
-            color = '#4080ff' if self.is_dark_mode else 'b'
-            self.memory_curve.setPen(pg.mkPen(color=color, width=3))
+            fill_color = (64, 128, 255, 100) if self.is_dark_mode else (0, 0, 255, 100)
+            line_color = '#4080ff' if self.is_dark_mode else 'b'
+            self.memory_curve.setPen(pg.mkPen(color=line_color, width=3))
+            self.fill_curve.setBrush(pg.mkBrush(color=fill_color))
 
 def start_app():
     app = QApplication(sys.argv)
     window = MemoryTrackerApp()
     window.show()
-        # Set up signal handling for Ctrl+C
+    # Set up signal handling for Ctrl+C
     def signal_handler(sig, frame):
         print("Closing application...")
         app.quit()
@@ -415,3 +421,6 @@ def start_app():
     timer.timeout.connect(lambda: None)  # Dummy function to process events
 
     sys.exit(app.exec_())
+
+if __name__ == "__main__":
+    start_app()
