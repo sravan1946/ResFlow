@@ -12,7 +12,9 @@ from tracker.monitor import get_memory_usage, get_top_processes
 from PyQt5.QtWidgets import QSizePolicy, QScrollArea
 from PyQt5.QtWidgets import QGraphicsDropShadowEffect
 from PyQt5.QtGui import QColor
-
+from PyQt5.QtWidgets import QInputDialog
+from tracker.alert import set_alert_threshold, DEFAULT_ALERT_THRESHOLD
+from tracker.alert import alert_threshold
 # Set global pyqtgraph configuration
 pg.setConfigOptions(antialias=True)
 
@@ -147,6 +149,24 @@ class MemoryTrackerApp(QMainWindow):
         process_layout.addLayout(self.process_cards)
 
         self.main_layout.addWidget(process_frame)
+# In the header_layout section, after adding the theme button:
+
+        self.threshold_button = QPushButton("⚙️ Set Alert")
+        self.threshold_button.setFixedWidth(140)
+        self.threshold_button.setStyleSheet("""
+            QPushButton {
+                background-color: #4CAF50;
+                color: white;
+                font-weight: bold;
+                border-radius: 6px;
+                padding: 8px;
+            }
+            QPushButton:hover {
+                background-color: #388E3C;
+            }
+        """)
+        self.threshold_button.clicked.connect(self.set_alert_threshold)
+        header_layout.addWidget(self.threshold_button)
 
         # Initialize state
         self.alert_triggered = False
@@ -167,6 +187,21 @@ class MemoryTrackerApp(QMainWindow):
         shadow.setYOffset(3)
         shadow.setColor(QColor(0, 0, 0, 60))
         widget.setGraphicsEffect(shadow)
+    def set_alert_threshold(self):
+        """Show dialog to set new alert threshold"""
+        threshold, ok = QInputDialog.getInt(
+            self,
+            "Set Alert Threshold",
+            "Enter memory usage percentage threshold (1-100):",
+            DEFAULT_ALERT_THRESHOLD,
+            1, 100, 1
+        )
+        
+        if ok:
+            set_alert_threshold(threshold)
+            self.memory_label.setText(
+                self.memory_label.text() + f" (Alert at {threshold}%)"
+            )
 
     def toggle_theme(self):
         self.is_dark_mode = not self.is_dark_mode
@@ -203,6 +238,19 @@ class MemoryTrackerApp(QMainWindow):
                     background: #3700B3;
                     min-height: 20px;
                     border-radius: 5px;
+                }
+                               
+            """)
+            self.threshold_button.setStyleSheet("""
+                QPushButton {
+                    background-color: #2E7D32;
+                    color: white;
+                    font-weight: bold;
+                    border-radius: 6px;
+                    padding: 8px;
+                }
+                QPushButton:hover {
+                    background-color: #1B5E20;
                 }
             """)
             
@@ -251,6 +299,18 @@ class MemoryTrackerApp(QMainWindow):
                     background: #0078d4;
                     min-height: 20px;
                     border-radius: 5px;
+                }
+            """)
+            self.threshold_button.setStyleSheet("""
+                QPushButton {
+                    background-color: #4CAF50;
+                    color: white;
+                    font-weight: bold;
+                    border-radius: 6px;
+                    padding: 8px;
+                }
+                QPushButton:hover {
+                    background-color: #388E3C;
                 }
             """)
             
@@ -368,9 +428,9 @@ class MemoryTrackerApp(QMainWindow):
         from tracker.logger import log_memory
 
         usage = get_memory_usage()
-        if usage["percent"] > 80 and not self.alert_triggered:
+        if usage["percent"] > alert_threshold and not self.alert_triggered:
             show_alert(self, usage["percent"])
-            log_memory(f"ALERT: High memory usage detected at {usage['percent']}%")
+            log_memory(f"ALERT: High memory usage detected at {usage['percent']}% (Threshold: {alert_threshold}%)")
             self.alert_triggered = True
         else:
             self.alert_triggered = False
