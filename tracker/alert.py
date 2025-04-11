@@ -5,7 +5,7 @@ from tracker.logger import log_alert
 
 # Default values
 DEFAULT_ALERT_THRESHOLD = 80  
-COOLDOWN_TIME = 60  
+COOLDOWN_TIME = 10  
 
 # Global variables
 last_alert_time = 0  
