@@ -2,3 +2,5 @@
 2025-03-20 18:53:49,917 - WARNING - ALERT: High Memory Usage at 82.1%
 2025-03-21 10:24:10,926 - WARNING - ALERT: High Memory Usage at 80.1%
 2025-03-21 11:04:35,109 - WARNING - ALERT: High Memory Usage at 82.8%; Highest Memory Process: chrome (PID: 3913) - 8.92%
+2025-04-11 15:28:19,294 - WARNING - ALERT: High Memory Usage at 86.4%; Highest Memory Process: code (PID: 19370) - 26.63%
+2025-04-11 15:33:52,442 - WARNING - ALERT: High Memory Usage at 67.8%; Highest Memory Process: gnome-shell (PID: 1987) - 14.89%
