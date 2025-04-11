@@ -424,9 +424,10 @@ class MemoryTrackerApp(QMainWindow):
             print(f"Error killing process with PID {pid}: {e}")
 
     def update_data(self):
-        from tracker.alert import show_alert
+        from tracker.alert import show_alert, alert_threshold
         from tracker.logger import log_memory
-
+        print(f"update_data: current threshold={alert_threshold}")
+        
         usage = get_memory_usage()
         if usage["percent"] > alert_threshold and not self.alert_triggered:
             show_alert(self, usage["percent"])
