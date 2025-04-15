@@ -5,19 +5,25 @@ from tracker.logger import log_alert
 
 # Default values
 DEFAULT_ALERT_THRESHOLD = 80  
-COOLDOWN_TIME = 10  
+DEFAULT_COOLDOWN_TIME = 20
 
 # Global variables
 last_alert_time = 0  
 alert_threshold = DEFAULT_ALERT_THRESHOLD
+COOLDOWN_TIME = DEFAULT_COOLDOWN_TIME
 
 def set_alert_threshold(new_threshold):
     """Set the global alert threshold"""
     global alert_threshold
     alert_threshold = new_threshold
 
+def set_cooldown_time(new_cooldown):
+    global COOLDOWN_TIME
+    COOLDOWN_TIME = new_cooldown
+
 def show_alert(parent, usage_percent):
     global last_alert_time
+    print(f"Checking alert: usage={usage_percent}, threshold={alert_threshold}")
 
     current_time = time.time()
     if usage_percent < alert_threshold or (current_time - last_alert_time) < COOLDOWN_TIME:
