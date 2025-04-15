@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import QSizePolicy, QScrollArea
 from PyQt5.QtWidgets import QGraphicsDropShadowEffect
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QInputDialog
-from tracker.alert import set_alert_threshold, DEFAULT_ALERT_THRESHOLD
+from tracker.alert import set_alert_threshold, set_cooldown_time, DEFAULT_ALERT_THRESHOLD,DEFAULT_COOLDOWN_TIME
 from tracker.alert import alert_threshold
 # Set global pyqtgraph configuration
 pg.setConfigOptions(antialias=True)
@@ -189,18 +189,29 @@ class MemoryTrackerApp(QMainWindow):
         widget.setGraphicsEffect(shadow)
     def set_alert_threshold(self):
         """Show dialog to set new alert threshold"""
-        threshold, ok = QInputDialog.getInt(
+        threshold, ok1 = QInputDialog.getInt(
             self,
             "Set Alert Threshold",
             "Enter memory usage percentage threshold (1-100):",
             DEFAULT_ALERT_THRESHOLD,
             1, 100, 1
         )
+        if not ok1:
+            return
         
-        if ok:
+        cooldown, ok2 = QInputDialog.getInt(
+            self,
+            "Set Cooldown Time",
+            "Enter cooldown time in seconds (1-300):",
+            DEFAULT_COOLDOWN_TIME,
+            1, 300, 1
+        )
+
+        if ok2:
             set_alert_threshold(threshold)
+            set_cooldown_time(cooldown)
             self.memory_label.setText(
-                self.memory_label.text() + f" (Alert at {threshold}%)"
+                f"Memory Usage: Fetching... (Alert at {threshold}%, Cooldown: {cooldown}s)"
             )
 
     def toggle_theme(self):
